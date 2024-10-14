@@ -12,6 +12,11 @@ pipeline {
                 }
             }
         }
+        stage('Prepare') {
+            steps {
+                sh 'mkdir -p results/' 
+            }
+        }
         stage('Start Juice Shop') {
             steps {
                 script {
@@ -32,35 +37,39 @@ pipeline {
                     docker run --name zap \
                     --add-host=host.docker.internal:host-gateway \
                     -v /home/dawid/abcd-student/.zap:/zap/wrk:rw \
-                    -v /home/dawid/Reports:/zap/wrk/reports:rw \
                     ghcr.io/zaproxy/zaproxy:stable bash -c \
-                    "zap.sh -cmd -addonupdate && \
+                    zap.sh -cmd -addonupdate && \
                     zap.sh -cmd -addoninstall communityScripts && \
                     zap.sh -cmd -addoninstall pscanrulesAlpha && \
                     zap.sh -cmd -addoninstall pscanrulesBeta && \
                     zap.sh -cmd -autorun /zap/wrk/passive.yaml"
                 '''
-                    sh '''
-                    docker cp zap:/zap/wrk/reports/zap_xml_report.xml $WORKSPACE/zap_xml_report.xml
-                    docker cp zap:/zap/wrk/reports/zap_html_report.html $WORKSPACE/zap_html_report.html
-                '''
-                }
             }
         }
     }
-
+            post {
+                always {
+                    sh '''
+                        docker cp zap:/zap/wrk/reports/zap_html_report.html ${WORKSPACE}/results/zap_html_report.html
+                        docker cp zap:/zap/wrk/reports/zap_xml_report.xml ${WORKSPACE}/results/zap_xml_report.xml
+                        docker stop zap juice-shop
+                        docker rm zap
+                    '''
+                }
+            }
+        }
         post {
             always {
-                script{
-                sh 'docker stop juice-shop zap || true'
-
+        always {
+            echo 'Archiving results...'
+            archiveArtifacts artifacts: 'results/**/*', fingerprint: true, allowEmptyArchive: true
+            echo 'Sending reports to DefectDojo...'
                 defectDojoPublisher(
-                    artifact: '$WORKSPACE/zap_xml_report.xml', 
+                    artifact: 'results/zap_xml_report.xml', 
                     productName: 'Juice Shop', 
-                    scanType: 'ZAP Scan', 
+                    scanType: 'ZAP Scan',
                     engagementName: 'dawid.apolinarski@enp.pl'
                 )
-
             }
         }
     }
