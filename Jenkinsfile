@@ -39,8 +39,10 @@ pipeline {
                     docker run --name zap \
                     --add-host=host.docker.internal:host-gateway \
                     -v /home/dawid/abcd-student/.zap:/zap/wrk:rw \
+                    -v /home/dawid/Reports:/zap/wrk/reports:rw \
                     ghcr.io/zaproxy/zaproxy:stable bash -c \
-                    "zap.sh -cmd -addonupdate && \
+                    "mkdir -p /zap/wrk/reports && \
+                    zap.sh -cmd -addonupdate && \
                     zap.sh -cmd -addoninstall communityScripts && \
                     zap.sh -cmd -addoninstall pscanrulesAlpha && \
                     zap.sh -cmd -addoninstall pscanrulesBeta && \
@@ -50,12 +52,15 @@ pipeline {
             }
             post {
                 always {
-                    sh '''
-                        docker cp zap:/zap/wrk/reports/zap_html_report.html ${WORKSPACE}/results/zap_html_report.html
-                        docker cp zap:/zap/wrk/reports/zap_xml_report.xml ${WORKSPACE}/results/zap_xml_report.xml
-                        docker stop zap juice-shop || true
-                        docker rm zap || true
-                    '''
+                    script {
+                        // Kopiowanie raportów do katalogu roboczego Jenkinsa
+                        sh '''
+                            docker cp zap:/zap/wrk/reports/zap_html_report.html ${WORKSPACE}/results/zap_html_report.html
+                            docker cp zap:/zap/wrk/reports/zap_xml_report.xml ${WORKSPACE}/results/zap_xml_report.xml
+                            docker stop zap juice-shop || true
+                            docker rm zap || true
+                        '''
+                    }
                 }
             }
         }
