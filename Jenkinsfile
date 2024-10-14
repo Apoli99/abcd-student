@@ -51,7 +51,7 @@ pipeline {
                 sh ' docker stop juice-shop || true'
 
                 defectDojoPublisher(
-                    artifact: '/home/dawid/Reports/zap_report.xml', 
+                    artifact: '/home/dawid/Reports/zap_xml_report.xml', 
                     productName: 'Juice Shop', 
                     scanType: 'ZAP Scan', 
                     engagementName: 'dawid.apolinarski@enp.pl'
