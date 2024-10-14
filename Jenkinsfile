@@ -14,39 +14,23 @@ pipeline {
         }
         stage('Prepare') {
             steps {
-                sh 'mkdir -p results/' 
+                sh 'mkdir -p results/'
             }
         }
-        stage('Start Juice Shop') {
+        stage('DAST') {
             steps {
-                script {
-                    sh '''
-                        docker run --name juice-shop -d --rm \
-                            -p 3000:3000 \
-                            bkimminich/juice-shop
-                    '''
-                    sh 'sleep 5'
-                }
-            }
-        }
-       
-        stage('ZAP Passive Scan') {
-            steps {
-                script {
-                    sh '''
+                sh '''
+                    docker run --name juice-shop -d --rm \
+                    -p 3000:3000 bkimminich/juice-shop
+                    sleep 5
+                '''
+                sh '''
                     docker run --name zap \
-                    --add-host=host.docker.internal:host-gateway \
-                    -v /home/dawid/abcd-student/.zap:/zap/wrk:rw \
-                    ghcr.io/zaproxy/zaproxy:stable bash -c \
-                    zap.sh -cmd -addonupdate && \
-                    zap.sh -cmd -addoninstall communityScripts && \
-                    zap.sh -cmd -addoninstall pscanrulesAlpha && \
-                    zap.sh -cmd -addoninstall pscanrulesBeta && \
-                    zap.sh -cmd -autorun /zap/wrk/passive.yaml"
+                        -v /home/dawid/abcd-student/.zap:/zap/wrk:rw \
+                        -t ghcr.io/zaproxy/zaproxy:stable \
+                        bash -c "zap.sh -cmd -addonupdate; zap.sh -cmd -addoninstall communityScripts -addoninstall pscanrulesAlpha -addoninstall pscanrulesBeta -autorun /zap/wrk/passive.yaml" || true
                 '''
             }
-        }
-    }
             post {
                 always {
                     sh '''
@@ -58,18 +42,17 @@ pipeline {
                 }
             }
         }
-
-            post {
-                always {
-                    echo 'Archiving results...'
-                    archiveArtifacts artifacts: 'results/**/*', fingerprint: true, allowEmptyArchive: true
-                    echo 'Sending reports to DefectDojo...'
-                    defectDojoPublisher(
-                        artifact: 'results/zap_xml_report.xml', 
-                        productName: 'Juice Shop', 
-                        scanType: 'ZAP Scan',
-                        engagementName: 'dawid.apolinarski@enp.pl'
-            )
+    }
+    post {
+        always {
+            echo 'Archiving results...'
+            archiveArtifacts artifacts: 'results/**/*', fingerprint: true, allowEmptyArchive: true
+            echo 'Sending reports to DefectDojo...'
+            defectDojoPublisher(
+                artifact: 'results/zap_xml_report.xml', 
+                productName: 'Juice Shop', 
+                scanType: 'ZAP Scan', 
+                engagementName: 'dawid.apolinarski@enp.pl')
         }
     }
 }
