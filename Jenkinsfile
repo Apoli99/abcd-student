@@ -12,37 +12,55 @@ pipeline {
                 }
             }
         }
+
         stage('Prepare') {
             steps {
-                sh 'mkdir -p results/'
+                sh 'mkdir -p results/' 
             }
         }
-        stage('DAST') {
+
+        stage('Start Juice Shop') {
             steps {
-                sh '''
-                    docker run --name juice-shop -d --rm \
-                    -p 3000:3000 bkimminich/juice-shop
-                    sleep 5
-                '''
-                sh '''
+                script {
+                    sh '''
+                        docker run --name juice-shop -d --rm \
+                            -p 3000:3000 \
+                            bkimminich/juice-shop
+                    '''
+                    sh 'sleep 5'
+                }
+            }
+        }
+
+        stage('ZAP Passive Scan') {
+            steps {
+                script {
+                    sh '''
                     docker run --name zap \
-                        -v /home/dawid/abcd-student/.zap:/zap/wrk:rw \
-                        -t ghcr.io/zaproxy/zaproxy:stable \
-                        bash -c "zap.sh -cmd -addonupdate; zap.sh -cmd -addoninstall communityScripts -addoninstall pscanrulesAlpha -addoninstall pscanrulesBeta -autorun /zap/wrk/passive.yaml" || true
-                '''
+                    --add-host=host.docker.internal:host-gateway \
+                    -v /home/dawid/abcd-student/.zap:/zap/wrk:rw \
+                    ghcr.io/zaproxy/zaproxy:stable bash -c \
+                    "zap.sh -cmd -addonupdate && \
+                    zap.sh -cmd -addoninstall communityScripts && \
+                    zap.sh -cmd -addoninstall pscanrulesAlpha && \
+                    zap.sh -cmd -addoninstall pscanrulesBeta && \
+                    zap.sh -cmd -autorun /zap/wrk/passive.yaml"
+                    '''
+                }
             }
             post {
                 always {
                     sh '''
                         docker cp zap:/zap/wrk/reports/zap_html_report.html ${WORKSPACE}/results/zap_html_report.html
                         docker cp zap:/zap/wrk/reports/zap_xml_report.xml ${WORKSPACE}/results/zap_xml_report.xml
-                        docker stop zap juice-shop
-                        docker rm zap
+                        docker stop zap juice-shop || true
+                        docker rm zap || true
                     '''
                 }
             }
         }
     }
+
     post {
         always {
             echo 'Archiving results...'
@@ -51,8 +69,9 @@ pipeline {
             defectDojoPublisher(
                 artifact: 'results/zap_xml_report.xml', 
                 productName: 'Juice Shop', 
-                scanType: 'ZAP Scan', 
-                engagementName: 'dawid.apolinarski@enp.pl')
+                scanType: 'ZAP Scan',
+                engagementName: 'dawid.apolinarski@enp.pl'
+            )
         }
     }
 }
