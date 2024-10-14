@@ -52,20 +52,17 @@ pipeline {
             }
             post {
                 always {
-                    script {
-                        // Kopiowanie raportów do katalogu roboczego Jenkinsa
                         sh '''
                             docker cp zap:/zap/wrk/reports/zap_html_report.html ${WORKSPACE}/results/zap_html_report.html
                             docker cp zap:/zap/wrk/reports/zap_xml_report.xml ${WORKSPACE}/results/zap_xml_report.xml
-                            docker stop zap juice-shop || true
+                            docker stop zap || true
+                            docker stop juice-shop || true
                             docker rm zap || true
                         '''
-                    }
                 }
             }
         }
     }
-
     post {
         always {
             echo 'Archiving results...'
