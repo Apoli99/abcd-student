@@ -20,7 +20,7 @@ pipeline {
                             -p 3000:3000 \
                             bkimminich/juice-shop
                     '''
-                    sh 'sleep 10'
+                    sh 'sleep 5'
                 }
             }
         }
@@ -29,16 +29,16 @@ pipeline {
             steps {
                 script {
                     sh '''
-                    docker run --name zap \
+                    docker run --rm --name zap \
                     --add-host=host.docker.internal:host-gateway \
-                    -v /mnt/c/Users/dawid/abcd-student/.zap:/zap/wrk:z \
-                    -v /mnt/c/Users/dawid/Reports:/zap/wrk/reports:z 
+                    -v /home/dawid/abcd-student/.zap:/zap/wrk:rw \
+                    -v /home/dawid/Reports:/zap/wrk/reports:rw \
                     ghcr.io/zaproxy/zaproxy:stable bash -c \
                     "zap.sh -cmd -addonupdate && \
                     zap.sh -cmd -addoninstall communityScripts && \
                     zap.sh -cmd -addoninstall pscanrulesAlpha && \
                     zap.sh -cmd -addoninstall pscanrulesBeta && \
-                    zap.sh -cmd -autourun /zap/wrk/passive_scan.yaml"
+                    zap.sh -cmd -autorun /zap/wrk/passive.yaml"
                 '''
                 }
             }
@@ -48,10 +48,10 @@ pipeline {
         post {
             always {
                 script{
-                sh ' docker stop juice-shop zap || true'
+                sh ' docker stop juice-shop || true'
 
                 defectDojoPublisher(
-                    artifact: '/home/dawid/Downloads/Reports/zap_report.xml', 
+                    artifact: '/home/dawid/Reports/zap_report.xml', 
                     productName: 'Juice Shop', 
                     scanType: 'ZAP Scan', 
                     engagementName: 'dawid.apolinarski@enp.pl'
