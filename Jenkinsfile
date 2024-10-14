@@ -29,7 +29,7 @@ pipeline {
             steps {
                 script {
                     sh '''
-                    docker run --rm --name zap \
+                    docker run --name zap \
                     --add-host=host.docker.internal:host-gateway \
                     -v /home/dawid/abcd-student/.zap:/zap/wrk:rw \
                     -v /home/dawid/Reports:/zap/wrk/reports:rw \
@@ -40,6 +40,10 @@ pipeline {
                     zap.sh -cmd -addoninstall pscanrulesBeta && \
                     zap.sh -cmd -autorun /zap/wrk/passive.yaml"
                 '''
+                    sh '''
+                    docker cp zap:/zap/wrk/reports/zap_xml_report.xml $WORKSPACE/zap_xml_report.xml
+                    docker cp zap:/zap/wrk/reports/zap_html_report.html $WORKSPACE/zap_html_report.html
+                '''
                 }
             }
         }
@@ -48,11 +52,10 @@ pipeline {
         post {
             always {
                 script{
-                sh 'docker stop juice-shop || true'
-                sh 'pwd'
+                sh 'docker stop juice-shop zap || true'
 
                 defectDojoPublisher(
-                    artifact: 'zap_xml_report.xml', 
+                    artifact: '$WORKSPACE/zap_xml_report.xml', 
                     productName: 'Juice Shop', 
                     scanType: 'ZAP Scan', 
                     engagementName: 'dawid.apolinarski@enp.pl'
