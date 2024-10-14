@@ -29,10 +29,10 @@ pipeline {
             steps {
                 script {
                     sh '''
-                    docker run --name zap --rm \
+                    docker run --name zap \
                     --add-host=host.docker.internal:host-gateway \
-                    -v /mnt/c/Users/dawid/abcd-student/.zap:/zap/wrk:rw \
-                    -v /mnt/c/Users/dawid/Reports:/zap/wrk/reports 
+                    -v /mnt/c/Users/dawid/abcd-student/.zap:/zap/wrk:z \
+                    -v /mnt/c/Users/dawid/Reports:/zap/wrk/reports:z 
                     ghcr.io/zaproxy/zaproxy:stable bash -c \
                     "zap.sh -cmd -addonupdate && \
                     zap.sh -cmd -addoninstall communityScripts && \
@@ -48,7 +48,7 @@ pipeline {
         post {
             always {
                 script{
-                sh ' docker stop juice-shop || true'
+                sh ' docker stop juice-shop zap || true'
 
                 defectDojoPublisher(
                     artifact: '/home/dawid/Downloads/Reports/zap_report.xml', 
