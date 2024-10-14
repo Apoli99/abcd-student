@@ -48,12 +48,11 @@ pipeline {
         post {
             always {
                 script{
-                sh ' docker stop juice-shop || true'
-                sh 'ls -la /home/dawid/Reports'
-                sh 'pwd'
+                sh 'docker stop juice-shop || true'
+                sh 'cp /home/dawid/Reports/zap_xml_report.xml ./zap_xml_report.xml'
 
                 defectDojoPublisher(
-                    artifact: '/home/dawid/Reports/zap_xml_report.xml', 
+                    artifact: 'zap_xml_report.xml', 
                     productName: 'Juice Shop', 
                     scanType: 'ZAP Scan', 
                     engagementName: 'dawid.apolinarski@enp.pl'
