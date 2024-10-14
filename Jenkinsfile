@@ -49,6 +49,8 @@ pipeline {
             always {
                 script{
                 sh ' docker stop juice-shop || true'
+                sh 'ls -la /home/dawid/Reports'
+                sh 'pwd'
 
                 defectDojoPublisher(
                     artifact: '/home/dawid/Reports/zap_xml_report.xml', 
