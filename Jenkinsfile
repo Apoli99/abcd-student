@@ -42,6 +42,11 @@ pipeline {
                 }
             }
         }
+        stage('SCA') {
+            steps {
+                sh 'osv-scanner scan --lockfile package-lock.json --format json results/sca-osv-scanner.json '
+            }
+        }
     }
     post {
         always {
@@ -49,6 +54,7 @@ pipeline {
             archiveArtifacts artifacts: 'results/**/*', fingerprint: true, allowEmptyArchive: true
             echo 'Sending reports to DefectDojo...'
             defectDojoPublisher(artifact: 'results/zap_xml_report.xml', productName: 'Juice Shop', scanType: 'ZAP Scan', engagementName: 'dawid.apolinarski@enp.pl')
+            defectDojoPublisher(artifact: 'results/sca-osv-scanner.json', productName: 'Juice Shop', scanType: 'OSV Scan', engagementName: 'dawid.apolinarski@enp.pl')
         }
     }
 }
