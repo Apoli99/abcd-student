@@ -60,7 +60,7 @@ pipeline {
             echo 'Sending reports to DefectDojo...'
             defectDojoPublisher(artifact: 'results/zap_xml_report.xml', productName: 'Juice Shop', scanType: 'ZAP Scan', engagementName: 'dawid.apolinarski@enp.pl')
             defectDojoPublisher(artifact: 'results/sca-osv-scanner.json', productName: 'Juice Shop', scanType: 'OSV Scan', engagementName: 'dawid.apolinarski@enp.pl')
-            defectDojoPublisher(artifact: 'results/sca-osv-scanner.json', productName: 'Juice Shop', scanType: 'Trufflehog Scan', engagementName: 'dawid.apolinarski@enp.pl')
+            defectDojoPublisher(artifact: 'trufflehog_scan.json', productName: 'Juice Shop', scanType: 'Trufflehog Scan', engagementName: 'dawid.apolinarski@enp.pl')
         }
     }
 }
