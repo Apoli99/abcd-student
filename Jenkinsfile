@@ -47,6 +47,11 @@ pipeline {
                 sh 'osv-scanner --lockfile=package-lock.json --format=json --output=results/sca-osv-scanner.json || true'
             }
         }
+        stage('TruffleHog') {
+            steps {
+                sh 'trufflehog git https://github.com/Apoli99/abcd-student --json > results/trufflehog_scan.json'
+            }
+        }
     }
     post {
         always {
@@ -55,6 +60,7 @@ pipeline {
             echo 'Sending reports to DefectDojo...'
             defectDojoPublisher(artifact: 'results/zap_xml_report.xml', productName: 'Juice Shop', scanType: 'ZAP Scan', engagementName: 'dawid.apolinarski@enp.pl')
             defectDojoPublisher(artifact: 'results/sca-osv-scanner.json', productName: 'Juice Shop', scanType: 'OSV Scan', engagementName: 'dawid.apolinarski@enp.pl')
+            defectDojoPublisher(artifact: 'results/sca-osv-scanner.json', productName: 'Juice Shop', scanType: 'Trufflehog Scan', engagementName: 'dawid.apolinarski@enp.pl')
         }
     }
 }
