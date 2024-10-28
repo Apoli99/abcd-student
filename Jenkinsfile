@@ -52,6 +52,11 @@ pipeline {
                 sh 'trufflehog git https://github.com/Apoli99/abcd-student --json > results/trufflehog.json'
             }
         }
+         stage('Semgrep') {
+            steps {
+                sh 'semgrep scan --config auto --json > results/semgrep_scan.json || true'
+            }
+        }
     }
     post {
         always {
@@ -59,6 +64,7 @@ pipeline {
             defectDojoPublisher(artifact: 'results/zap_xml_report.xml', productName: 'Juice Shop', scanType: 'ZAP Scan', engagementName: 'dawid.apolinarski@enp.pl')
             defectDojoPublisher(artifact: 'results/sca-osv-scanner.json', productName: 'Juice Shop', scanType: 'OSV Scan', engagementName: 'dawid.apolinarski@enp.pl')
             defectDojoPublisher(artifact: 'results/trufflehog.json', productName: 'Juice Shop', scanType: 'Trufflehog Scan', engagementName: 'dawid.apolinarski@enp.pl')
+            defectDojoPublisher(artifact: 'results/semgrep_scan.json', productName: 'Juice Shop', scanType: 'Semgrep JSON Report', engagementName: 'dawid.apolinarski@enp.pl')
         }
     }
 }
